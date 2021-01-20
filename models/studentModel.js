@@ -23,7 +23,7 @@ class Student {
         });
     }
 
-    static findByEmail(studentID, result){
+    static findByID(studentID, result){
         pool.query("select * from Student where studentID = ? limit 1", studentID, (err, doc)=>{
             if (err) {
                 result(err, null);
@@ -36,6 +36,28 @@ class Student {
 
     static updatePassword(studentID, newPassword, result){
         pool.query("update Student set accessCode = ? where studentID = ?", [newPassword, studentID], (err, doc)=>{
+            if (err) {
+                result(err, null);
+            }
+            else {
+                result(null, doc);
+            }
+        });
+    }
+
+    static updatePhoneNumber(studentID, newPhoneNumber, result){
+        pool.query("update Student set telNumber = ? where studentID = ?", [newPhoneNumber, studentID], (err, doc)=>{
+            if (err) {
+                result(err, null);
+            }
+            else {
+                result(null, doc);
+            }
+        });
+    }
+
+    static updateEmailAddress(studentID, newEmailAddress, result){
+        pool.query("update Student set emailAddress = ? where studentID = ?", [newEmailAddress, studentID], (err, doc)=>{
             if (err) {
                 result(err, null);
             }

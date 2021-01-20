@@ -6,6 +6,45 @@ const passwordGenerator = require('generate-password');
 const StudentModel = require('../models/studentModel');
 
 const studentController = {
+    //GET REQUESTS
+
+    getStudent:
+        async (req, res, next)=>{
+            if(req.user.ID && req.user.accessLevel == "student"){
+                StudentModel.findByID(req.user.ID, (err, doc)=>{
+                    if(err){
+                        return next(err);
+                    }
+                    else if(!doc || doc.length == 0){
+                        return res.status(404).json({
+                            "error": true,
+                            "message": "Account not found",
+                            "data": null
+                        });
+                    }
+                    else{
+                        doc.accessCode = undefined;
+
+                        return res.status(200).json({
+                            "error": false,
+                            "message": "Account successfully retrieved",
+                            "data": doc
+                        });
+                    }
+                });
+            }
+            else{
+                return res.status(403).json({
+                    "error":true,
+                    "message": "Invalid access token",
+                    "data": null
+                });
+            }
+        }
+    ,
+
+    //POST REQUESTS
+    
     signUp:
         async (req, res, next) => {
             //Validates data sent in request body
@@ -84,16 +123,16 @@ const studentController = {
                 });
             }
 
-            StudentModel.findByEmail(req.body.studentID, (err, doc) => {
+            StudentModel.findByID(req.body.studentID, (err, doc) => {
                 if (err) {
                     return next(err);
                 }
                 else if (!doc || doc.length == 0) {
-                    return res.status(400).json({
+                    return res.status(404).json({
                         "error": true,
-                        "message": "Student ID# not assigned to an account",
+                        "message": "Incorrect login credentials",
                         "data": null
-                    })
+                    });
                 }
                 else {
                     bcrypt.compare(req.body.password, doc.accessCode, (err, result) => {
@@ -101,7 +140,8 @@ const studentController = {
                             return next(err);
                         }
                         else if (result == true) {
-                            const accessToken = jwt.sign({ "ID": doc.studentID }, process.env.ACCESS_TOKEN, {expiresIn:"1d"});
+                            const accessToken = jwt.sign({"accessLevel": "student",
+                            "ID": doc.studentID }, process.env.ACCESS_TOKEN, {expiresIn:"1d"});
                             doc.accessCode = undefined;
                             
                             return res.status(200).json({
@@ -113,7 +153,7 @@ const studentController = {
                                 }
                             })
                         }
-                        return res.status(400).json({
+                        return res.status(404).json({
                             "error":true,
                             "message": "Incorrect login credentials",
                             "data": null
@@ -123,6 +163,9 @@ const studentController = {
             });
         }
     ,
+
+    //PATCH REQUESTS
+    
     updatePassword:
         async (req, res, next)=>{
             await body('password', 'Invalid password, 30 character limit').isLength({ min: 1 }, { max: 30 }).trim().escape().run(req);
@@ -137,7 +180,7 @@ const studentController = {
                 });
             }
 
-            if(req.user.ID){
+            if(req.user.ID && req.user.accessLevel == "student"){
                 try {    
                     //hashes password before saving to db
                     var passwordHash = await bcrypt.hash(req.body.password, 10);
@@ -149,19 +192,115 @@ const studentController = {
                     if(err){
                         return next(err);
                     }
-                    else{
+                    else if(doc.changedRows >= 1){
                         return res.status(200).json({
                             "error": false,
                             "message": "Password successfully updated",
                             "data": null
                         });
                     }
+                    else{
+                        return res.status(500).json({
+                            "error": true,
+                            "message": "Password could not be updated",
+                            "data": null
+                        });
+                    }
                 });
             }
             else{
-                return res.status(400).json({
+                return res.status(403).json({
                     "error":true,
-                    "message": "Request missing ID#",
+                    "message": "Invalid access token",
+                    "data": null
+                });
+            }
+        }
+    ,
+    //need to finish this
+    updatePhoneNumber:
+        async (req, res, next)=>{
+            await body('phoneNumber', 'Invalid phone number, 15 number limit').isLength({ min: 1 }, { max: 15 }).trim().escape().run(req);
+
+            const reqErrors = validationResult(req);
+
+            if (!reqErrors.isEmpty()) {
+                return res.status(400).json({
+                    "error": true,
+                    "message": reqErrors.array(),
+                    "data": null
+                });
+            }
+
+            if(req.user.ID && req.user.accessLevel == "student"){
+                StudentModel.updatePhoneNumber(req.user.ID, req.body.phoneNumber, (err, doc)=>{
+                    if(err){
+                        return next(err);
+                    }
+                    else if(doc.changedRows >= 1){
+                        return res.status(200).json({
+                            "error": false,
+                            "message": "Phone number successfully updated",
+                            "data": null
+                        });
+                    }
+                    else{
+                        return res.status(500).json({
+                            "error": true,
+                            "message": "Phone number could not be updated",
+                            "data": null
+                        });
+                    }
+                });
+            }
+            else{
+                return res.status(403).json({
+                    "error":true,
+                    "message": "Invalid access token",
+                    "data": null
+                });
+            }
+        }
+    ,
+    updateEmailAddress:
+        async (req, res, next)=>{
+            await body('emailAddress', 'Invalid email address').isEmail().trim().escape().run(req);
+
+            const reqErrors = validationResult(req);
+
+            if (!reqErrors.isEmpty()) {
+                return res.status(400).json({
+                    "error": true,
+                    "message": reqErrors.array(),
+                    "data": null
+                });
+            }
+
+            if(req.user.ID && req.user.accessLevel == "student"){
+                StudentModel.updateEmailAddress(req.user.ID, req.body.emailAddress, (err, doc)=>{
+                    if(err){
+                        return next(err);
+                    }
+                    else if(doc.changedRows >= 1){
+                        return res.status(200).json({
+                            "error": false,
+                            "message": "Email address successfully updated",
+                            "data": null
+                        });
+                    }
+                    else{
+                        return res.status(500).json({
+                            "error": true,
+                            "message": "Email address could not be updated",
+                            "data": null
+                        });
+                    }
+                });
+            }
+            else{
+                return res.status(403).json({
+                    "error":true,
+                    "message": "Invalid access token",
                     "data": null
                 });
             }
