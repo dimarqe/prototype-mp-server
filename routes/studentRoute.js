@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const bodyParser = require('body-parser');
 
-const authenticateToken = require('../controllers/authentication')
+const authenticateToken = require('../controllers/authentication');
 const studentController = require('../controllers/studentController');
 
 //body parser middleware
@@ -11,7 +11,7 @@ router.use(bodyParser.urlencoded({ extended: true }));
 router.get('/student', authenticateToken, studentController.getStudent);
 
 
-router.post('/student/signUp', studentController.signUp);
+router.post('/student/signUp', authenticateToken, studentController.signUp);
 
 router.post('/student/login',studentController.login);
 
