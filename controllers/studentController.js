@@ -227,7 +227,6 @@ const studentController = {
             }
         }
     ,
-    //need to finish this
     updatePhoneNumber:
         async (req, res, next) => {
             if (req.user.ID && req.user.accessLevel == "student") {
@@ -301,6 +300,40 @@ const studentController = {
                         return res.status(500).json({
                             "error": true,
                             "message": "Email address could not be updated",
+                            "data": null
+                        });
+                    }
+                });
+            }
+            else {
+                return res.status(403).json({
+                    "error": true,
+                    "message": "Invalid access token",
+                    "data": null
+                });
+            }
+        }
+    ,
+
+    //DELETE REQUESTS
+    deleteAccount:
+        (req, res, next)=>{
+            if(req.user.ID && req.user.accessLevel == "student"){
+                StudentModel.delete(req.user.ID, (err, doc)=>{
+                    if(err){
+                        return next(err);
+                    }
+                    else if (doc.affectedRows >= 1) {
+                        return res.status(200).json({
+                            "error": false,
+                            "message": "Account successfully deleted",
+                            "data": null
+                        });
+                    }
+                    else {
+                        return res.status(500).json({
+                            "error": true,
+                            "message": "Error deleting account",
                             "data": null
                         });
                     }

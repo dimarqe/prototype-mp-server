@@ -23,6 +23,18 @@ class Student {
         });
     }
 
+    static delete(studentID, result){
+        //check to make sure that LIMIT 1 would work as a part of this query
+        pool.query("delete from Student where studentID = ?", studentID, (err, doc) => {
+            if (err) {
+                result(err, null);
+            }
+            else {
+                result(null, doc);
+            }
+        });
+    }
+
     static findByID(studentID, result){
         pool.query("select * from Student where studentID = ? limit 1", studentID, (err, doc)=>{
             if (err) {

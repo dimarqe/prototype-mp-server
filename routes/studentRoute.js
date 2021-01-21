@@ -22,4 +22,6 @@ router.patch('/student/phoneNumber', authenticateToken, studentController.update
 
 router.patch('/student/emailAddress', authenticateToken, studentController.updateEmailAddress);
 
+router.delete('/student', authenticateToken, studentController.deleteAccount);
+
 module.exports = router;
